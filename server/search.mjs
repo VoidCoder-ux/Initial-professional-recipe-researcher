@@ -48,7 +48,7 @@ async function searchOne(query, maxResults) {
   if (process.env.SEARCH_API_URL) return searchCustom(query, maxResults);
   if (process.env.TAVILY_API_KEY) return searchTavily(query, maxResults);
   if (process.env.SERPER_API_KEY) return searchSerper(query, maxResults);
-  return [];
+  return searchDuckDuckGo(query, maxResults);
 }
 
 async function searchCustom(query, maxResults) {
@@ -140,6 +140,45 @@ async function searchSerper(query, maxResults) {
       snippet: item.snippet ?? "",
       provider: "serper"
     }));
+}
+
+async function searchDuckDuckGo(query, maxResults) {
+  const response = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 ProfessionalRecipeResearcher/0.1"
+    }
+  });
+
+  if (!response.ok) throw new Error(`Anahtarsiz arama basarisiz: ${response.status}`);
+  const html = await response.text();
+  const matches = [...html.matchAll(/<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g)];
+
+  return matches.slice(0, maxResults).map((match) => ({
+    title: cleanHtml(match[2]),
+    url: decodeDuckUrl(match[1]),
+    snippet: cleanHtml(match[3]),
+    provider: "duckduckgo"
+  }));
+}
+
+function cleanHtml(value) {
+  return String(value ?? "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;|&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function decodeDuckUrl(value) {
+  const cleaned = value.replace(/&amp;/g, "&");
+  try {
+    const parsed = new URL(cleaned, "https://duckduckgo.com");
+    return parsed.searchParams.get("uddg") || parsed.href;
+  } catch {
+    return cleaned;
+  }
 }
 
 function normalizeUrl(url) {

@@ -29,7 +29,7 @@ const server = createServer(async (request, response) => {
 
       if (results.length === 0) {
         return json(response, 400, {
-          error: "Arama sağlayıcısı yok veya sonuç dönmedi. SEARCH_API_URL, TAVILY_API_KEY ya da SERPER_API_KEY ekleyin."
+          error: "Arama sonucu donmedi. Daha guclu arama icin SEARCH_API_URL, TAVILY_API_KEY ya da SERPER_API_KEY ekleyin."
         });
       }
 
@@ -71,7 +71,7 @@ function getSearchProvider() {
   if (process.env.SEARCH_API_URL) return "custom";
   if (process.env.TAVILY_API_KEY) return "tavily";
   if (process.env.SERPER_API_KEY) return "serper";
-  return "none";
+  return "duckduckgo";
 }
 
 function readJson(request) {

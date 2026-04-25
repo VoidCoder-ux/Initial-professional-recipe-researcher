@@ -100,6 +100,12 @@ SEARCH_API_SNIPPET_PATH=description
 
 Kisaca: key adi, header adi, endpoint, GET/POST govdesi ve sonuc JSON yollari serbest. API'nin arama sonucu dondurmesi gerekir; sadece key eklemek, saglayicinin formati bilinmiyorsa yeterli olmaz.
 
+## GitHub Pages notu
+
+GitHub Pages sadece statik HTML/CSS/JS yayinlar. Bu proje ise arama, kaynak cekme ve DeepSeek/OpenAI sentezi icin `server/index.mjs` backend'ine ihtiyac duyar.
+
+Bu nedenle `https://voidcoder-ux.github.io/Initial-professional-recipe-researcher/` adresinde arayuz gorunur, ama tam tarif arastirmasi calismaz. Tam internet yayini icin backend'i Render, Railway, Fly.io, Vercel serverless ya da bir VPS uzerinde yayinlamak gerekir.
+
 ## GitHub'a yayinlama
 
 ```bash

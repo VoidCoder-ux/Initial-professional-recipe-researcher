@@ -3,6 +3,7 @@ const result = document.querySelector("#result");
 const submitButton = document.querySelector("#submit-button");
 const depthButtons = [...document.querySelectorAll("[data-depth]")];
 let depth = "deep";
+let apiAvailable = false;
 
 for (const button of depthButtons) {
   button.addEventListener("click", () => {
@@ -18,18 +19,29 @@ for (const button of document.querySelectorAll(".examples button")) {
 }
 
 fetch("/api/health")
-  .then((response) => response.json())
+  .then((response) => {
+    if (!response.ok) throw new Error("API yok");
+    return response.json();
+  })
   .then((health) => {
+    apiAvailable = true;
     document.querySelector("#search-status").textContent = `Arama: ${health.searchProvider}`;
     document.querySelector("#openai-status").textContent = `LLM: ${health.hasLlm ? health.llmProvider : "anahtar yok"}`;
   })
   .catch(() => {
-    document.querySelector("#search-status").textContent = "Arama: bilinmiyor";
-    document.querySelector("#openai-status").textContent = "OpenAI: bilinmiyor";
+    const isGitHubPages = location.hostname.endsWith("github.io");
+    document.querySelector("#search-status").textContent = isGitHubPages ? "Arama: backend yok" : "Arama: bilinmiyor";
+    document.querySelector("#openai-status").textContent = isGitHubPages ? "LLM: backend yok" : "LLM: bilinmiyor";
+    if (isGitHubPages) showStaticHostingNotice();
   });
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (!apiAvailable) {
+    showStaticHostingNotice();
+    return;
+  }
+
   submitButton.disabled = true;
   submitButton.textContent = "Araştırılıyor...";
   result.className = "empty-state";
@@ -91,6 +103,17 @@ function renderReport(report) {
         )
         .join("")}
     </section>
+  `;
+}
+
+function showStaticHostingNotice() {
+  result.className = "error";
+  result.innerHTML = `
+    <h2>Backend gerekli</h2>
+    <p>GitHub Pages sadece statik dosya yayinlar; bu uygulamanin arama ve LLM sentezi icin Node.js backend'i calismali.</p>
+    <p>Yerelde calistirmak icin proje klasorunde su komutu kullan:</p>
+    <pre>node server/index.mjs</pre>
+    <p>Internetten tam kullanmak icin backend'i Render, Railway, Fly.io veya bir VPS uzerinde yayinlayip frontend'i o API adresine baglamak gerekir.</p>
   `;
 }
 

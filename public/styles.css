@@ -235,6 +235,27 @@ input:focus {
   font-weight: 700;
 }
 
+.error h2 {
+  margin-bottom: 10px;
+  color: #7d281b;
+}
+
+.error p {
+  margin-top: 8px;
+  color: #7d281b;
+  line-height: 1.5;
+}
+
+.error pre {
+  overflow-x: auto;
+  margin: 12px 0 4px;
+  padding: 12px;
+  border-radius: 6px;
+  background: #2a1713;
+  color: #fff8f5;
+  font-weight: 600;
+}
+
 .report {
   display: grid;
   gap: 22px;

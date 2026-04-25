@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profesyonel Tarif Araştırıcı</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace">
+        <aside class="search-panel">
+          <div class="brand">
+            <span class="mark">PR</span>
+            <div>
+              <h1>Profesyonel Tarif Araştırıcı</h1>
+              <p>Global kaynak tarar, Türkçe doğrulanmış üretim notu çıkarır.</p>
+            </div>
+          </div>
+
+          <form id="research-form" class="research-form">
+            <label>
+              Tarif veya teknik
+              <input id="query" value="croissant" placeholder="Örn. croissant" />
+            </label>
+
+            <label>
+              Mutfak / stil
+              <input id="cuisine" placeholder="Fransız, Japon, İtalyan..." />
+            </label>
+
+            <label>
+              Hedef çıktı
+              <input id="targetYield" value="10 porsiyon" placeholder="10 porsiyon, 1 tepsi..." />
+            </label>
+
+            <div class="segmented" aria-label="Araştırma derinliği">
+              <button type="button" class="active" data-depth="deep">Derin</button>
+              <button type="button" data-depth="fast">Hızlı</button>
+            </div>
+
+            <label class="check-row">
+              <input id="strictProfessional" type="checkbox" checked />
+              Ev tipi kaynakları agresif ele
+            </label>
+
+            <button id="submit-button" class="primary">Tarifi Araştır</button>
+          </form>
+
+          <div class="examples">
+            <button type="button">croissant</button>
+            <button type="button">ramen tare shoyu</button>
+            <button type="button">entremet çikolata</button>
+            <button type="button">risotto milanese</button>
+            <button type="button">sourdough baguette</button>
+          </div>
+
+          <div class="status-grid">
+            <span id="search-status">Arama: kontrol ediliyor</span>
+            <span id="openai-status">OpenAI: kontrol ediliyor</span>
+          </div>
+        </aside>
+
+        <section class="result-panel">
+          <div id="result" class="empty-state">
+            <h2>Profesyonel reçete araştırması</h2>
+            <p>
+              Sonuçlar; kaynak puanı, doğrulama notları, gramajlar, kritik sıcaklıklar, ekipman ve sorun giderme
+              bölümleriyle burada görünür.
+            </p>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -1,14 +1,14 @@
-# Profesyonel Tarif Araştırıcı
+# Profesyonel Tarif Arastirici
 
-Kişisel kullanım için hazırlanmış global tarif araştırma aracı. Webde farklı dillerde arama yapar, ev tipi/blog sinyallerini eleyerek profesyonel kaynaklara öncelik verir ve sonucu Türkçe, kaynaklı bir üretim raporu olarak çıkarır.
+Kisisel kullanim icin hazirlanmis global tarif arastirma araci. Webde farkli dillerde arama yapar, ev tipi/blog sinyallerini eleyerek profesyonel kaynaklara oncelik verir ve sonucu Turkce, kaynakli bir uretim raporu olarak cikarir.
 
-## Özellikler
+## Ozellikler
 
-- Global web araması: Tavily, Serper veya `.env` ile tanımlanan herhangi bir HTTP arama API'siyle çok dilli sorgular üretir.
+- Global web aramasi: Tavily, Serper veya `.env` ile tanimlanan herhangi bir HTTP arama API'siyle cok dilli sorgular uretir.
 - Profesyonel kaynak filtresi: chef, culinary school, gramaj, oran, teknik ve yield gibi sinyalleri puanlar.
-- Ev tipi tariflerden kaçınma: kolay/pratik/anne/blog/homemade gibi sinyalleri negatif puanlar.
-- Türkçe çıktı: malzeme, yöntem, kritik oranlar, süre/ısı, ekipman, sorun giderme ve kaynak notları üretir.
-- Gizli anahtar güvenliği: `.env` git dışında tutulur.
+- Ev tipi tariflerden kacinma: kolay/pratik/anne/blog/homemade gibi sinyalleri negatif puanlar.
+- Turkce cikti: malzeme, yontem, kritik oranlar, sure/isi, ekipman, sorun giderme ve kaynak notlari uretir.
+- Gizli anahtar guvenligi: `.env` git disinda tutulur.
 
 ## Kurulum
 
@@ -17,26 +17,24 @@ cp .env.example .env
 npm run dev
 ```
 
-Windows PowerShell kullanıyorsan:
+Windows PowerShell kullaniyorsan:
 
 ```powershell
 Copy-Item .env.example .env
 npm run dev
 ```
 
-Sonra tarayıcıda `http://127.0.0.1:8787` adresini aç.
-
-Bu proje dış bağımlılık kullanmaz. `npm` yerine doğrudan Node ile de çalıştırabilirsin:
+Bu proje dis bagimlilik kullanmaz. `npm` yerine dogrudan Node ile de calistirabilirsin:
 
 ```bash
 node server/index.mjs
 ```
 
-Sonra tarayıcıda `http://127.0.0.1:8787` adresini aç.
+Sonra tarayicida `http://127.0.0.1:8787` adresini ac.
 
-## Gerekli API anahtarları
+## Gerekli API anahtarlari
 
-`.env` içine şunları ekle:
+`.env` icine sunlari ekle:
 
 ```env
 OPENAI_API_KEY=...
@@ -44,13 +42,13 @@ OPENAI_MODEL=gpt-5.4-mini
 TAVILY_API_KEY=...
 ```
 
-`TAVILY_API_KEY` yerine `SERPER_API_KEY` de kullanabilirsin. İkisi de varsa Tavily tercih edilir.
+`TAVILY_API_KEY` yerine `SERPER_API_KEY` de kullanabilirsin. Ikisi de varsa Tavily tercih edilir.
 
-## Serbest API anahtarı
+## Serbest API anahtari
 
-Tavily/Serper kullanmak istemezsen herhangi bir arama API'sini `.env` içinde tarif edebilirsin. `SEARCH_API_URL` doluysa uygulama önce bu özel sağlayıcıyı kullanır.
+Tavily/Serper kullanmak istemezsen herhangi bir arama API'sini `.env` icinde tarif edebilirsin. `SEARCH_API_URL` doluysa uygulama once bu ozel saglayiciyi kullanir.
 
-GET örneği:
+GET ornegi:
 
 ```env
 SEARCH_API_URL=https://example.com/search?q={{queryUrl}}&limit={{maxResults}}
@@ -64,7 +62,7 @@ SEARCH_API_URL_PATH=url
 SEARCH_API_SNIPPET_PATH=snippet
 ```
 
-POST örneği:
+POST ornegi:
 
 ```env
 SEARCH_API_URL=https://example.com/search
@@ -79,9 +77,9 @@ SEARCH_API_URL_PATH=link
 SEARCH_API_SNIPPET_PATH=description
 ```
 
-Kısaca: key adı, header adı, endpoint, GET/POST gövdesi ve sonuç JSON yolları serbest. API'nin arama sonucu döndürmesi gerekir; sadece key eklemek, sağlayıcının formatı bilinmiyorsa yeterli olmaz.
+Kisaca: key adi, header adi, endpoint, GET/POST govdesi ve sonuc JSON yollari serbest. API'nin arama sonucu dondurmesi gerekir; sadece key eklemek, saglayicinin formati bilinmiyorsa yeterli olmaz.
 
-## GitHub'a yayınlama
+## GitHub'a yayinlama
 
 ```bash
 git init
@@ -92,8 +90,8 @@ git remote add origin https://github.com/KULLANICI_ADIN/profesyonel-tarif-arasti
 git push -u origin main
 ```
 
-`.env` dosyası `.gitignore` içinde olduğu için API anahtarların GitHub'a gitmez.
+`.env` dosyasi `.gitignore` icinde oldugu icin API anahtarlarin GitHub'a gitmez.
 
 ## Notlar
 
-Bu araç “doğruluğu teyit edilmiş” raporu kaynaklar arası tutarlılığa, profesyonel kaynak puanına ve modelin belirsizliği açıkça işaretlemesine dayandırır. Tıbbi, alerjen, gıda güvenliği veya ticari üretim kararlarında son kontrol yine profesyonel mutfak standardına göre yapılmalıdır.
+Bu arac "dogrulugu teyit edilmis" raporu kaynaklar arasi tutarliliga, profesyonel kaynak puanina ve modelin belirsizligi acikca isaretlemesine dayandirir. Tibbi, alerjen, gida guvenligi veya ticari uretim kararlarinda son kontrol yine profesyonel mutfak standardina gore yapilmalidir.

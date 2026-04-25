@@ -21,7 +21,7 @@ fetch("/api/health")
   .then((response) => response.json())
   .then((health) => {
     document.querySelector("#search-status").textContent = `Arama: ${health.searchProvider}`;
-    document.querySelector("#openai-status").textContent = `OpenAI: ${health.hasOpenAi ? "hazır" : "anahtar yok"}`;
+    document.querySelector("#openai-status").textContent = `LLM: ${health.hasLlm ? health.llmProvider : "anahtar yok"}`;
   })
   .catch(() => {
     document.querySelector("#search-status").textContent = "Arama: bilinmiyor";

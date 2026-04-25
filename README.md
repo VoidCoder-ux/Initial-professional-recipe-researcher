@@ -44,6 +44,27 @@ TAVILY_API_KEY=...
 
 `TAVILY_API_KEY` yerine `SERPER_API_KEY` de kullanabilirsin. Ikisi de varsa Tavily tercih edilir.
 
+## DeepSeek ile kullanma
+
+OpenAI yerine DeepSeek kullanmak istersen `.env` dosyasina sunlari ekle:
+
+```env
+DEEPSEEK_API_KEY=...
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-v4-flash
+```
+
+DeepSeek resmi dokumanina gore OpenAI uyumlu Chat Completions API kullanir. Guncel base URL `https://api.deepseek.com`; V4 icin `deepseek-v4-flash` veya daha guclu kalite icin `deepseek-v4-pro` kullanabilirsin.
+
+Baska OpenAI uyumlu bir servis kullanmak icin:
+
+```env
+LLM_PROVIDER=custom
+LLM_API_KEY=...
+LLM_BASE_URL=https://example.com
+LLM_MODEL=...
+```
+
 ## Serbest API anahtari
 
 Tavily/Serper kullanmak istemezsen herhangi bir arama API'sini `.env` icinde tarif edebilirsin. `SEARCH_API_URL` doluysa uygulama once bu ozel saglayiciyi kullanir.

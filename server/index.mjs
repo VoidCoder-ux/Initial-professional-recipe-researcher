@@ -19,7 +19,9 @@ const server = createServer(async (request, response) => {
       return json(response, 200, {
         ok: true,
         searchProvider: getSearchProvider(),
-        hasOpenAi: Boolean(process.env.OPENAI_API_KEY)
+        hasOpenAi: Boolean(process.env.OPENAI_API_KEY),
+        hasLlm: hasLlmKey(),
+        llmProvider: getLlmProvider()
       });
     }
 
@@ -72,6 +74,17 @@ function getSearchProvider() {
   if (process.env.TAVILY_API_KEY) return "tavily";
   if (process.env.SERPER_API_KEY) return "serper";
   return "duckduckgo";
+}
+
+function hasLlmKey() {
+  return Boolean(process.env.DEEPSEEK_API_KEY || process.env.LLM_API_KEY || process.env.OPENAI_API_KEY);
+}
+
+function getLlmProvider() {
+  if (process.env.DEEPSEEK_API_KEY || process.env.LLM_PROVIDER === "deepseek") return "deepseek";
+  if (process.env.LLM_API_KEY && process.env.LLM_BASE_URL) return "custom";
+  if (process.env.OPENAI_API_KEY) return "openai";
+  return "none";
 }
 
 function readJson(request) {

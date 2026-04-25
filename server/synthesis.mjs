@@ -43,7 +43,7 @@ async function synthesizeWithOpenAiResponses(request, evidence) {
       },
       body: JSON.stringify({
       model: process.env.OPENAI_MODEL || defaultOpenAiModel,
-      max_output_tokens: Number(process.env.LLM_MAX_TOKENS || 1200),
+      max_output_tokens: Number(process.env.LLM_MAX_TOKENS || 3000),
       reasoning: { effort: request.depth === "deep" ? "medium" : "low" },
         input: [
           { role: "system", content: systemPrompt() },
@@ -60,9 +60,10 @@ async function synthesizeWithOpenAiResponses(request, evidence) {
       })
     }, llmTimeoutMs(request));
 
-  if (!response.ok) throw new Error(`OpenAI sentezi basarisiz: ${response.status} ${await readTextWithTimeout(response, 3000)}`);
+  const timeoutMs = llmTimeoutMs(request);
+  if (!response.ok) throw new Error(`OpenAI sentezi basarisiz: ${response.status} ${await readTextWithTimeout(response, timeoutMs)}`);
 
-  const data = await readJsonWithTimeout(response, 3000);
+  const data = await readJsonWithTimeout(response, timeoutMs);
   const parsed = JSON.parse(extractResponsesText(data));
   return withSources(parsed, evidence);
 }
@@ -83,14 +84,15 @@ async function synthesizeWithChatCompletions({ apiKey, baseUrl, model, request, 
           { role: "user", content: JSON.stringify(userPayload(request, evidence)) }
         ],
       response_format: { type: "json_object" },
-      max_tokens: Number(process.env.LLM_MAX_TOKENS || 1200),
+      max_tokens: Number(process.env.LLM_MAX_TOKENS || 3000),
       temperature: 0.2
       })
     }, llmTimeoutMs(request));
 
-  if (!response.ok) throw new Error(`${providerName} sentezi basarisiz: ${response.status} ${await readTextWithTimeout(response, 3000)}`);
+  const timeoutMs = llmTimeoutMs(request);
+  if (!response.ok) throw new Error(`${providerName} sentezi basarisiz: ${response.status} ${await readTextWithTimeout(response, timeoutMs)}`);
 
-  const data = await readJsonWithTimeout(response, 3000);
+  const data = await readJsonWithTimeout(response, timeoutMs);
   const text = data.choices?.[0]?.message?.content;
   if (!text) throw new Error(`${providerName} yanitinda metin bulunamadi.`);
 
@@ -247,7 +249,7 @@ function withSources(report, evidence) {
 function llmTimeoutMs(request) {
   const configured = Number(process.env.LLM_TIMEOUT_MS || 0);
   if (configured > 0) return configured;
-  return request.depth === "deep" ? 15000 : 8000;
+  return request.depth === "deep" ? 45000 : 20000;
 }
 
 async function fetchLlmWithTimeout(url, options, timeoutMs) {

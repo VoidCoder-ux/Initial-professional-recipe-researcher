@@ -72,8 +72,8 @@ Arayuz varsayilan olarak `Hizli` modda acilir. Bu mod daha az sorgu ve daha az k
 LLM bekleme suresini `.env` icinden kisaltip uzatabilirsin:
 
 ```env
-LLM_TIMEOUT_MS=8000
-LLM_MAX_TOKENS=1200
+LLM_TIMEOUT_MS=20000
+LLM_MAX_TOKENS=3000
 ```
 
 DeepSeek/OpenAI yavas kalirsa uygulama hata vermek yerine kaynak raporuna duser.

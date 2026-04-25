@@ -35,7 +35,7 @@ const server = createServer(async (request, response) => {
         });
       }
 
-      const rawEvidence = await collectEvidence(results, payload.depth === "deep" ? 10 : 6);
+      const rawEvidence = await collectEvidence(results, payload.depth === "deep" ? 7 : 4);
       const professionalEvidence = payload.strictProfessional
         ? rawEvidence.filter((item) => item.professionalScore >= 50)
         : rawEvidence;
@@ -53,12 +53,12 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(port, "127.0.0.1", () => {
-  console.log(`Profesyonel Tarif Araştırıcı: http://127.0.0.1:${port}`);
+  console.log(`Profesyonel Tarif Arastirici: http://127.0.0.1:${port}`);
 });
 
 function validateResearchRequest(body) {
   const query = String(body.query ?? "").trim();
-  if (query.length < 2 || query.length > 160) throw new Error("Tarif sorgusu 2-160 karakter olmalı.");
+  if (query.length < 2 || query.length > 160) throw new Error("Tarif sorgusu 2-160 karakter olmali.");
 
   return {
     query,

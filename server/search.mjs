@@ -15,25 +15,28 @@ const multilingualTerms = [
   "ricetta professionale",
   "receta profesional",
   "professionelles rezept",
-  "プロ レシピ",
-  "专业 食谱"
+  "professional recipe japanese",
+  "professional recipe chinese"
 ];
 
 export function buildSearchQueries(request) {
   const base = [request.query, request.cuisine, request.targetYield].filter(Boolean).join(" ");
   const strict = request.strictProfessional ? professionalTerms : professionalTerms.slice(0, 4);
-  return [
+  const queries = [
     `${base} ${strict.slice(0, 5).join(" ")}`,
     `${base} ${strict.slice(5).join(" ")}`,
     `${base} ${multilingualTerms.slice(0, 3).join(" ")}`,
     `${base} ${multilingualTerms.slice(3).join(" ")}`
   ].map((query) => query.trim());
+
+  return request.depth === "deep" ? queries : queries.slice(0, 2);
 }
 
 export async function searchWeb(request) {
   const queries = buildSearchQueries(request);
-  const maxPerQuery = request.depth === "deep" ? 8 : 5;
-  const batches = await Promise.all(queries.map((query) => searchOne(query, maxPerQuery)));
+  const maxPerQuery = request.depth === "deep" ? 6 : 3;
+  const settled = await Promise.allSettled(queries.map((query) => searchOne(query, maxPerQuery)));
+  const batches = settled.flatMap((item) => (item.status === "fulfilled" ? [item.value] : []));
   const seen = new Set();
 
   return batches.flat().filter((result) => {
@@ -71,10 +74,10 @@ async function searchCustom(query, maxResults) {
     options.body = interpolate(bodyTemplate, { query, maxResults });
   }
 
-  const response = await fetch(url, options);
-  if (!response.ok) throw new Error(`Özel arama API isteği başarısız: ${response.status}`);
+  const response = await fetchWithTimeout(url, options, 6000);
+  if (!response.ok) throw new Error(`Ozel arama API istegi basarisiz: ${response.status}`);
 
-  const data = await response.json();
+  const data = await readJsonWithTimeout(response, 3000);
   const items = getPath(data, process.env.SEARCH_API_RESULTS_PATH || "results") ?? [];
   const titlePath = process.env.SEARCH_API_TITLE_PATH || "title";
   const urlPath = process.env.SEARCH_API_URL_PATH || "url";
@@ -91,7 +94,7 @@ async function searchCustom(query, maxResults) {
 }
 
 async function searchTavily(query, maxResults) {
-  const response = await fetch("https://api.tavily.com/search", {
+  const response = await fetchWithTimeout("https://api.tavily.com/search", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -99,15 +102,15 @@ async function searchTavily(query, maxResults) {
     },
     body: JSON.stringify({
       query,
-      search_depth: "advanced",
+      search_depth: "basic",
       include_answer: false,
       include_raw_content: false,
       max_results: maxResults
     })
-  });
+  }, 6000);
 
-  if (!response.ok) throw new Error(`Tavily araması başarısız: ${response.status}`);
-  const data = await response.json();
+  if (!response.ok) throw new Error(`Tavily aramasi basarisiz: ${response.status}`);
+  const data = await readJsonWithTimeout(response, 3000);
 
   return (data.results ?? [])
     .filter((item) => item.title && item.url)
@@ -120,17 +123,17 @@ async function searchTavily(query, maxResults) {
 }
 
 async function searchSerper(query, maxResults) {
-  const response = await fetch("https://google.serper.dev/search", {
+  const response = await fetchWithTimeout("https://google.serper.dev/search", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-API-KEY": process.env.SERPER_API_KEY ?? ""
     },
     body: JSON.stringify({ q: query, num: maxResults })
-  });
+  }, 6000);
 
-  if (!response.ok) throw new Error(`Serper araması başarısız: ${response.status}`);
-  const data = await response.json();
+  if (!response.ok) throw new Error(`Serper aramasi basarisiz: ${response.status}`);
+  const data = await readJsonWithTimeout(response, 3000);
 
   return (data.organic ?? [])
     .filter((item) => item.title && item.link)
@@ -143,15 +146,17 @@ async function searchSerper(query, maxResults) {
 }
 
 async function searchDuckDuckGo(query, maxResults) {
-  const response = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`, {
+  const response = await fetchWithTimeout(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`, {
     headers: {
       "User-Agent": "Mozilla/5.0 ProfessionalRecipeResearcher/0.1"
     }
-  });
+  }, 6000);
 
   if (!response.ok) throw new Error(`Anahtarsiz arama basarisiz: ${response.status}`);
-  const html = await response.text();
-  const matches = [...html.matchAll(/<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g)];
+  const html = await readTextWithTimeout(response, 3000);
+  const matches = [
+    ...html.matchAll(/<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g)
+  ];
 
   return matches.slice(0, maxResults).map((match) => ({
     title: cleanHtml(match[2]),
@@ -203,7 +208,7 @@ function parseJsonObject(value) {
   if (!value) return {};
   const parsed = JSON.parse(value);
   if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
-    throw new Error("SEARCH_API_HEADERS JSON obje olmalı.");
+    throw new Error("SEARCH_API_HEADERS JSON obje olmali.");
   }
   return parsed;
 }
@@ -217,4 +222,23 @@ function getPath(value, path) {
       if (Array.isArray(current) && /^\d+$/.test(key)) return current[Number(key)];
       return current[key];
     }, value);
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Arama zaman asimina ugradi.")), timeoutMs))
+  ]);
+}
+
+async function readTextWithTimeout(response, timeoutMs) {
+  return Promise.race([
+    response.text(),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Cevap okuma zaman asimina ugradi.")), timeoutMs))
+  ]);
+}
+
+async function readJsonWithTimeout(response, timeoutMs) {
+  const text = await readTextWithTimeout(response, timeoutMs);
+  return JSON.parse(text);
 }

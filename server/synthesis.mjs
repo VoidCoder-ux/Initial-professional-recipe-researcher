@@ -2,61 +2,67 @@ const defaultOpenAiModel = "gpt-5.4-mini";
 const defaultDeepSeekModel = "deepseek-v4-flash";
 
 export async function synthesizeRecipe(request, evidence) {
-  if (process.env.DEEPSEEK_API_KEY || process.env.LLM_PROVIDER === "deepseek") {
-    return synthesizeWithChatCompletions({
-      apiKey: process.env.DEEPSEEK_API_KEY || process.env.LLM_API_KEY,
-      baseUrl: process.env.DEEPSEEK_BASE_URL || process.env.LLM_BASE_URL || "https://api.deepseek.com",
-      model: process.env.DEEPSEEK_MODEL || process.env.LLM_MODEL || defaultDeepSeekModel,
-      request,
-      evidence,
-      providerName: "DeepSeek"
-    });
+  try {
+    if (process.env.DEEPSEEK_API_KEY || process.env.LLM_PROVIDER === "deepseek") {
+      return await synthesizeWithChatCompletions({
+        apiKey: process.env.DEEPSEEK_API_KEY || process.env.LLM_API_KEY,
+        baseUrl: process.env.DEEPSEEK_BASE_URL || process.env.LLM_BASE_URL || "https://api.deepseek.com",
+        model: process.env.DEEPSEEK_MODEL || process.env.LLM_MODEL || defaultDeepSeekModel,
+        request,
+        evidence,
+        providerName: "DeepSeek"
+      });
+    }
+
+    if (process.env.LLM_API_KEY && process.env.LLM_BASE_URL) {
+      return await synthesizeWithChatCompletions({
+        apiKey: process.env.LLM_API_KEY,
+        baseUrl: process.env.LLM_BASE_URL,
+        model: process.env.LLM_MODEL || defaultDeepSeekModel,
+        request,
+        evidence,
+        providerName: "OpenAI uyumlu LLM"
+      });
+    }
+
+    if (process.env.OPENAI_API_KEY) return await synthesizeWithOpenAiResponses(request, evidence);
+
+    return keylessSourceReport(request, evidence);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "LLM sentezi tamamlanamadi.";
+    return keylessSourceReport(request, evidence, message);
   }
-
-  if (process.env.LLM_API_KEY && process.env.LLM_BASE_URL) {
-    return synthesizeWithChatCompletions({
-      apiKey: process.env.LLM_API_KEY,
-      baseUrl: process.env.LLM_BASE_URL,
-      model: process.env.LLM_MODEL || defaultDeepSeekModel,
-      request,
-      evidence,
-      providerName: "OpenAI uyumlu LLM"
-    });
-  }
-
-  if (process.env.OPENAI_API_KEY) return synthesizeWithOpenAiResponses(request, evidence);
-
-  return keylessSourceReport(request, evidence);
 }
 
 async function synthesizeWithOpenAiResponses(request, evidence) {
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
+  const response = await fetchLlmWithTimeout("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
       model: process.env.OPENAI_MODEL || defaultOpenAiModel,
+      max_output_tokens: Number(process.env.LLM_MAX_TOKENS || 1200),
       reasoning: { effort: request.depth === "deep" ? "medium" : "low" },
-      input: [
-        { role: "system", content: systemPrompt() },
-        { role: "user", content: JSON.stringify(userPayload(request, evidence)) }
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "recipe_report",
-          strict: true,
-          schema: recipeJsonSchema()
+        input: [
+          { role: "system", content: systemPrompt() },
+          { role: "user", content: JSON.stringify(userPayload(request, evidence)) }
+        ],
+        text: {
+          format: {
+            type: "json_schema",
+            name: "recipe_report",
+            strict: true,
+            schema: recipeJsonSchema()
+          }
         }
-      }
-    })
-  });
+      })
+    }, llmTimeoutMs(request));
 
-  if (!response.ok) throw new Error(`OpenAI sentezi basarisiz: ${response.status} ${await response.text()}`);
+  if (!response.ok) throw new Error(`OpenAI sentezi basarisiz: ${response.status} ${await readTextWithTimeout(response, 3000)}`);
 
-  const data = await response.json();
+  const data = await readJsonWithTimeout(response, 3000);
   const parsed = JSON.parse(extractResponsesText(data));
   return withSources(parsed, evidence);
 }
@@ -64,26 +70,27 @@ async function synthesizeWithOpenAiResponses(request, evidence) {
 async function synthesizeWithChatCompletions({ apiKey, baseUrl, model, request, evidence, providerName }) {
   if (!apiKey) return keylessSourceReport(request, evidence);
 
-  const response = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: `${systemPrompt()} JSON disinda hicbir sey yazma.` },
-        { role: "user", content: JSON.stringify(userPayload(request, evidence)) }
-      ],
+  const response = await fetchLlmWithTimeout(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: `${systemPrompt()} JSON disinda hicbir sey yazma.` },
+          { role: "user", content: JSON.stringify(userPayload(request, evidence)) }
+        ],
       response_format: { type: "json_object" },
+      max_tokens: Number(process.env.LLM_MAX_TOKENS || 1200),
       temperature: 0.2
-    })
-  });
+      })
+    }, llmTimeoutMs(request));
 
-  if (!response.ok) throw new Error(`${providerName} sentezi basarisiz: ${response.status} ${await response.text()}`);
+  if (!response.ok) throw new Error(`${providerName} sentezi basarisiz: ${response.status} ${await readTextWithTimeout(response, 3000)}`);
 
-  const data = await response.json();
+  const data = await readJsonWithTimeout(response, 3000);
   const text = data.choices?.[0]?.message?.content;
   if (!text) throw new Error(`${providerName} yanitinda metin bulunamadi.`);
 
@@ -175,7 +182,7 @@ function extractResponsesText(data) {
   return text;
 }
 
-function keylessSourceReport(request, evidence) {
+function keylessSourceReport(request, evidence, llmError = "") {
   const strongSources = evidence.filter((item) => item.professionalScore >= 70);
   const bestSources = evidence.slice(0, 6);
   const confidence = strongSources.length >= 3 ? "orta" : "dusuk";
@@ -210,7 +217,9 @@ function keylessSourceReport(request, evidence) {
     ],
     troubleshooting: [
       "Sonuc zayifsa sorguya chef, professional, culinary school, grams veya mutfak dilindeki karsiligini ekle.",
-      "Tam rapor istiyorsan .env dosyasina DEEPSEEK_API_KEY veya OPENAI_API_KEY ekleyip sunucuyu yeniden baslat."
+      llmError
+        ? `LLM sentezi kullanilamadi: ${llmError}`
+        : "Tam rapor istiyorsan .env dosyasina DEEPSEEK_API_KEY veya OPENAI_API_KEY ekleyip sunucuyu yeniden baslat."
     ],
     sourceNotes: evidence.map((item) => {
       const warnings = item.warnings.length ? ` Uyari: ${item.warnings.join(", ")}.` : "";
@@ -233,4 +242,29 @@ function withSources(report, evidence) {
       professionalScore: item.professionalScore
     }))
   };
+}
+
+function llmTimeoutMs(request) {
+  const configured = Number(process.env.LLM_TIMEOUT_MS || 0);
+  if (configured > 0) return configured;
+  return request.depth === "deep" ? 15000 : 8000;
+}
+
+async function fetchLlmWithTimeout(url, options, timeoutMs) {
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("LLM zaman asimina ugradi.")), timeoutMs))
+  ]);
+}
+
+async function readTextWithTimeout(response, timeoutMs) {
+  return Promise.race([
+    response.text(),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("LLM cevap okuma zaman asimina ugradi.")), timeoutMs))
+  ]);
+}
+
+async function readJsonWithTimeout(response, timeoutMs) {
+  const text = await readTextWithTimeout(response, timeoutMs);
+  return JSON.parse(text);
 }

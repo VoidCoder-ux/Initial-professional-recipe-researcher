@@ -2,7 +2,7 @@ const form = document.querySelector("#research-form");
 const result = document.querySelector("#result");
 const submitButton = document.querySelector("#submit-button");
 const depthButtons = [...document.querySelectorAll("[data-depth]")];
-let depth = "deep";
+let depth = "fast";
 let apiAvailable = false;
 
 for (const button of depthButtons) {
@@ -43,9 +43,9 @@ form.addEventListener("submit", async (event) => {
   }
 
   submitButton.disabled = true;
-  submitButton.textContent = "Araştırılıyor...";
+  submitButton.textContent = "Arastiriliyor...";
   result.className = "empty-state";
-  result.innerHTML = "<h2>Kaynaklar ayıklanıyor</h2><p>Profesyonel sinyaller ve kaynak tutarlılığı kontrol ediliyor.</p>";
+  result.innerHTML = "<h2>Kaynaklar ayiklaniyor</h2><p>Profesyonel sinyaller ve kaynak tutarliligi kontrol ediliyor.</p>";
 
   try {
     const response = await fetch("/api/research", {
@@ -61,14 +61,14 @@ form.addEventListener("submit", async (event) => {
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error ?? "Araştırma tamamlanamadı.");
+    if (!response.ok) throw new Error(data.error ?? "Arastirma tamamlanamadi.");
     renderReport(data);
   } catch (error) {
     result.className = "error";
-    result.textContent = error instanceof Error ? error.message : "Beklenmeyen hata oluştu.";
+    result.textContent = error instanceof Error ? error.message : "Beklenmeyen hata olustu.";
   } finally {
     submitButton.disabled = false;
-    submitButton.textContent = "Tarifi Araştır";
+    submitButton.textContent = "Tarifi Arastir";
   }
 });
 
@@ -84,12 +84,12 @@ function renderReport(report) {
     </header>
     <p class="summary">${escapeHtml(report.summary)}</p>
     ${section("Malzemeler", report.ingredients)}
-    ${section("Yöntem", report.method, true)}
+    ${section("Yontem", report.method, true)}
     ${section("Oran ve Kontrol", report.ratiosAndChecks)}
-    ${section("Süre ve Isı", report.timing)}
+    ${section("Sure ve Isi", report.timing)}
     ${section("Ekipman", report.equipment)}
     ${section("Sorun Giderme", report.troubleshooting)}
-    ${section("Kaynak Notları", report.sourceNotes)}
+    ${section("Kaynak Notlari", report.sourceNotes)}
     <section class="sources">
       <h3>Kaynaklar</h3>
       ${(report.sources ?? [])

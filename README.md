@@ -65,6 +65,19 @@ LLM_BASE_URL=https://example.com
 LLM_MODEL=...
 ```
 
+## Hiz ayarlari
+
+Arayuz varsayilan olarak `Hizli` modda acilir. Bu mod daha az sorgu ve daha az kaynak ceker. Daha kapsamli ama daha yavas arama icin `Derin` modunu sec.
+
+LLM bekleme suresini `.env` icinden kisaltip uzatabilirsin:
+
+```env
+LLM_TIMEOUT_MS=8000
+LLM_MAX_TOKENS=1200
+```
+
+DeepSeek/OpenAI yavas kalirsa uygulama hata vermek yerine kaynak raporuna duser.
+
 ## Serbest API anahtari
 
 Tavily/Serper kullanmak istemezsen herhangi bir arama API'sini `.env` icinde tarif edebilirsin. `SEARCH_API_URL` doluysa uygulama once bu ozel saglayiciyi kullanir.

@@ -292,7 +292,7 @@ input:focus {
   text-transform: uppercase;
 }
 
-.confidence.yüksek {
+.confidence.yuksek {
   background: #236548;
 }
 
@@ -300,7 +300,7 @@ input:focus {
   background: #8a652c;
 }
 
-.confidence.düşük {
+.confidence.dusuk {
   background: #9b3a2d;
 }
 
